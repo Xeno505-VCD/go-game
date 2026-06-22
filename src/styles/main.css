@@ -74,6 +74,7 @@ body {
 #gameCanvas { cursor: pointer; touch-action: manipulation; }
 
 .btn-red { background-color: #E53935; }
+.btn-green { background-color: #43A047; }
 .btn-orange { background-color: #FB8C00; }
 .btn-blue { background-color: #1E88E5; }
 
