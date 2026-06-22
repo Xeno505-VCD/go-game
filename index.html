@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>五子棋 - Gomoku</title>
+<link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+<div class="app-container">
+  <!-- 模式标签行 -->
+  <div id="modeLine">人机对战：(普通)</div>
+
+  <!-- 顶部信息栏 -->
+  <div id="infoBar">
+    <span>执棋：<strong id="currentTurn">黑棋</strong></span>
+    <span>|</span>
+    <span id="gameStatus">对局中</span>
+    <span>|</span>
+    <span id="timerBar" style="display:none;">⏱ 30s</span>
+    <span id="aiHint"></span>
+    <span id="rulesToggle" style="cursor:pointer;color:#FFD700;margin-left:4px;" title="规则说明">ⓘ 玩法</span>
+  </div>
+
+  <!-- 规则展开行 -->
+  <div id="rulesRow" style="display:none;">
+    <span id="rulesText">轮流落子，先五连者胜。<br>联机：一方创建房间记下房号→另一方输入房号加入→配对后执黑先行。</span>
+  </div>
+
+  <!-- 战绩 -->
+  <div id="rowStats">
+    <div id="statsBar"></div>
+  </div>
+
+  <!-- 主区域 -->
+  <div id="mainArea">
+    <!-- Canvas 正方形容器 -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- 控制面板(Footer) -->
+    <div class="control-footer" id="sidePanel">
+      <!-- 第一排：模式+难度+重开 -->
+      <div class="c-row" id="rowMode">
+        <button class="btn-blue" id="btnMode">模式</button>
+        <button class="btn-blue" id="btnDifficulty">难度</button>
+        <button class="btn-blue" id="restartBtn">重新开局</button>
+        <span id="modeLabel" style="display:none;color:#FFECB3;font-size:12px;">人机对战</span>
+        <select id="aiLevel" style="display:none;">
+          <option value="0">入门</option><option value="1">简单</option>
+          <option value="2" selected>普通</option><option value="3">困难</option><option value="4">大师</option>
+        </select>
+      </div>
+
+      <!-- 联机面板 -->
+      <div class="c-row" id="onlinePanel" style="display:none;flex-wrap:wrap;justify-content:center;gap:6px;">
+        <button class="btn-blue" id="btnCreateRoom">创建房间</button>
+        <input id="roomInput" type="number" min="1000" max="9999" placeholder="4位房间号" style="display:none;">
+        <button class="btn-blue" id="btnRoomInputMobile">输入房间号</button>
+        <button class="btn-blue" id="btnJoinRoom">加入房间</button>
+      </div>
+
+      <!-- 房间信息行 -->
+      <div class="c-row" id="roomInfoRow" style="display:none;">
+        <div id="roomInfo" style="font-size:14px;color:#FFD700;font-weight:bold;text-align:center;padding:4px 0;"></div>
+      </div>
+
+      <!-- AI面板容器（由JS控制显示/隐藏，PC端放难度select，手机端为空） -->
+      <div class="c-row" id="aiPanel"></div>
+
+      <!-- 操作按钮 -->
+      <div class="c-row" id="rowActions">
+        <button class="btn-red" id="btnSurrender">认输</button>
+        <button class="btn-orange" id="btnDraw">申请和棋</button>
+        <button class="btn-blue" id="btnUndo">悔棋</button>
+        <button class="btn-blue" id="btnRematch" style="display:none;">再来一局</button>
+      </div>
+
+      <!-- 反馈 -->
+      <div class="c-row" id="feedbackSection">
+        <textarea id="feedbackInput" placeholder="意见或建议..." rows="2"></textarea>
+        <button class="btn-blue" id="btnFeedback">发送</button>
+        <div id="feedbackHint" style="font-size:10px;color:#FFECB3;display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗（fixed） -->
+<div id="modeModal" style="display:none;">
+  <div id="modeModalBg"></div>
+  <div id="modeModalBox">
+    <div id="modeModalTitle">选择模式</div>
+    <button id="modeSelectPvp" class="btn-mode-select">👥 双人对战</button>
+    <button id="modeSelectAi" class="btn-mode-select">🤖 人机对战</button>
+    <button id="modeSelectOnline" class="btn-mode-select">🌐 联机对战</button>
+    <button id="modeModalCancel" class="btn-mode-cancel">取消</button>
+  </div>
+</div>
+<div id="rematchModal" style="display:none;">
+  <div id="rematchModalBg"></div>
+  <div id="rematchModalBox">
+    <div id="rematchModalTitle">对手邀请再来一局</div>
+    <button id="rematchAccept" class="btn-blue">同意</button>
+    <button id="rematchReject" class="btn-red">拒绝</button>
+  </div>
+</div>
+<div id="roomInputModal" style="display:none;">
+  <div id="roomInputModalBg"></div>
+  <div id="roomInputModalBox">
+    <div id="roomInputModalTitle">输入房间号</div>
+    <input id="roomInputModalField" type="number" min="1000" max="9999" placeholder="4位数字">
+    <div style="display:flex;gap:8px;">
+      <button id="roomInputModalConfirm" class="btn-mode-select" style="width:80px;">加入</button>
+      <button id="roomInputModalCancel" class="btn-mode-cancel" style="width:80px;">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 房间号展示弹窗（创建房间后弹出） -->
+<div id="roomShowModal" style="display:none;">
+  <div id="roomShowModalBg"></div>
+  <div id="roomShowModalBox">
+    <div id="roomShowModalTitle">房间已创建</div>
+    <div id="roomShowNumber" style="color:#FFD700;font-size:32px;font-weight:bold;letter-spacing:6px;">0000</div>
+    <button id="roomShowModalClose" class="btn-mode-cancel" style="width:120px;">关闭</button>
+  </div>
+</div>
+
+<!-- 难度选择弹窗 -->
+<div id="difficultyModal" style="display:none;">
+  <div id="difficultyModalBg"></div>
+  <div id="difficultyModalBox">
+    <div id="difficultyModalTitle">选择难度</div>
+    <button data-level="0" class="btn-diff-select">🌟 入门</button>
+    <button data-level="1" class="btn-diff-select">⭐ 简单</button>
+    <button data-level="2" class="btn-diff-select">⭐⭐ 普通</button>
+    <button data-level="3" class="btn-diff-select">⭐⭐⭐ 困难</button>
+    <button data-level="4" class="btn-diff-select">👑 大师</button>
+    <button id="difficultyModalCancel" class="btn-mode-cancel">取消</button>
+  </div>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
