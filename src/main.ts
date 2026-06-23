@@ -73,7 +73,7 @@ class GoApp {
     this.panel.btnVoice.addEventListener('click', () => {
       const muted = this.voice.toggleMute();
       this.panel.btnVoice.classList.toggle('active', !muted);
-      this.panel.btnVoice.textContent = muted ? '🎤 语音' : '🎤 已开启';
+      this.panel.btnVoice.textContent = muted ? '🎤 开启语音' : '🎤 关闭语音';
     });
 
     // PASS 按钮
