@@ -69,6 +69,13 @@ class GoApp {
     this.panel.btnCreateRoom.addEventListener('click', () => this.createRoom());
     this.panel.btnJoinRoom.addEventListener('click', () => this.joinRoom());
 
+    // 语音按钮
+    this.panel.btnVoice.addEventListener('click', () => {
+      const muted = this.voice.toggleMute();
+      this.panel.btnVoice.classList.toggle('active', !muted);
+      this.panel.btnVoice.textContent = muted ? '🎤 语音' : '🎤 已开启';
+    });
+
     // PASS 按钮
     const passBtn = document.getElementById('btnPass');
     if (passBtn) {
@@ -291,10 +298,24 @@ class GoApp {
         audio.play().catch(() => {});
       },
       onLocalVolume: (level) => {
-        this.panel.updateVoiceVolume('local', level);
+        const el = document.getElementById('voiceSpeaking');
+        if (el) {
+          if (level > 0.15) {
+            el.style.display = 'inline';
+            el.textContent = '🎤 你正在发言...';
+          } else {
+            el.style.display = 'none';
+          }
+        }
       },
       onRemoteVolume: (level) => {
-        this.panel.updateVoiceVolume('remote', level);
+        const el = document.getElementById('voiceSpeaking');
+        if (el) {
+          if (level > 0.10) {
+            el.style.display = 'inline';
+            el.textContent = '🎤 对方正在发言...';
+          }
+        }
       },
       onError: (err) => {
         this.panel.updateHint('语音错误: ' + err);

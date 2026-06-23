@@ -29,6 +29,7 @@ export class Panel {
   btnSurrender: HTMLButtonElement;
   btnDraw: HTMLButtonElement;
   btnUndo: HTMLButtonElement;
+  btnVoice: HTMLButtonElement;
   btnRematch: HTMLButtonElement;
 
   // 联机房间
@@ -67,6 +68,7 @@ export class Panel {
     this.btnSurrender = document.getElementById('btnSurrender') as HTMLButtonElement;
     this.btnDraw = document.getElementById('btnDraw') as HTMLButtonElement;
     this.btnUndo = document.getElementById('btnUndo') as HTMLButtonElement;
+    this.btnVoice = document.getElementById('btnVoice') as HTMLButtonElement;
     this.btnRematch = document.getElementById('btnRematch') as HTMLButtonElement;
     this.btnCreateRoom = document.getElementById('btnCreateRoom') as HTMLButtonElement;
     this.btnJoinRoom = document.getElementById('btnJoinRoom') as HTMLButtonElement;
@@ -182,6 +184,15 @@ export class Panel {
     }
     if (mode !== GameMode.ONLINE) {
       this.timerBarEl.style.display = 'none';
+    }
+    // 语音按钮仅联机模式显示
+    const voiceBtn = document.getElementById('btnVoice');
+    if (voiceBtn) {
+      voiceBtn.style.display = mode === GameMode.ONLINE ? '' : 'none';
+      if (mode !== GameMode.ONLINE) {
+        voiceBtn.classList.remove('active');
+        voiceBtn.textContent = '🎤 语音';
+      }
     }
   }
 
