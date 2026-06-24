@@ -64,9 +64,10 @@ export class VoiceChat {
   }
 
   toggleMic(): boolean {
-    if (!this.localStream) return this.micEnabled;
     this.micEnabled = !this.micEnabled;
-    this.localStream.getAudioTracks().forEach(t => t.enabled = this.micEnabled);
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach(t => t.enabled = this.micEnabled);
+    }
     this.sendSignaling?.({ type: 'VOICE_MUTE', muted: !this.micEnabled });
     return this.micEnabled;
   }
