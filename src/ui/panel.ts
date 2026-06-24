@@ -29,7 +29,8 @@ export class Panel {
   btnSurrender: HTMLButtonElement;
   btnDraw: HTMLButtonElement;
   btnUndo: HTMLButtonElement;
-  btnVoice: HTMLButtonElement;
+  btnMic: HTMLButtonElement;
+  btnSpeaker: HTMLButtonElement;
   btnRematch: HTMLButtonElement;
 
   // 联机房间
@@ -69,7 +70,8 @@ export class Panel {
     this.btnSurrender = document.getElementById('btnSurrender') as HTMLButtonElement;
     this.btnDraw = document.getElementById('btnDraw') as HTMLButtonElement;
     this.btnUndo = document.getElementById('btnUndo') as HTMLButtonElement;
-    this.btnVoice = document.getElementById('btnVoice') as HTMLButtonElement;
+    this.btnMic = document.getElementById('btnMic') as HTMLButtonElement;
+    this.btnSpeaker = document.getElementById('btnSpeaker') as HTMLButtonElement;
     this.btnRematch = document.getElementById('btnRematch') as HTMLButtonElement;
     this.btnCreateRoom = document.getElementById('btnCreateRoom') as HTMLButtonElement;
     this.btnJoinRoom = document.getElementById('btnJoinRoom') as HTMLButtonElement;
@@ -196,14 +198,16 @@ export class Panel {
       this.timerBarEl.style.display = 'none';
     }
     // 语音按钮仅联机模式显示
-    const voiceBtn = document.getElementById('btnVoice');
-    if (voiceBtn) {
-      voiceBtn.style.display = mode === GameMode.ONLINE ? '' : 'none';
+    const micBtn = document.getElementById('btnMic');
+    const spkBtn = document.getElementById('btnSpeaker');
+    if (micBtn) {
+      micBtn.style.display = mode === GameMode.ONLINE ? '' : 'none';
       if (mode !== GameMode.ONLINE) {
-        voiceBtn.classList.remove('active');
-        voiceBtn.textContent = '🎤 语音';
+        micBtn.classList.remove('off');
+        spkBtn?.classList.remove('off');
       }
     }
+    if (spkBtn) spkBtn.style.display = mode === GameMode.ONLINE ? '' : 'none';
     // 退出房间按钮仅联机模式显示（进入房间后才显示）
     const leaveBtn = document.getElementById('btnLeaveRoom');
     if (leaveBtn) {

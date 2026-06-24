@@ -73,11 +73,18 @@ class GoApp {
     // 退出房间按钮
     this.panel.btnLeaveRoom.addEventListener('click', () => this.leaveRoom());
 
-    // 语音按钮
-    this.panel.btnVoice.addEventListener('click', () => {
-      const muted = this.voice.toggleMute();
-      this.panel.btnVoice.classList.toggle('active', !muted);
-      this.panel.btnVoice.textContent = muted ? '🎤 开启语音' : '🎤 关闭语音';
+    // 麦克风按钮
+    this.panel.btnMic.addEventListener('click', () => {
+      const on = this.voice.toggleMic();
+      this.panel.btnMic.classList.toggle('off', !on);
+      this.panel.btnMic.textContent = on ? '🎤 麦克风' : '🎤 已静音';
+    });
+
+    // 收听按钮
+    this.panel.btnSpeaker.addEventListener('click', () => {
+      const on = this.voice.toggleSpeaker();
+      this.panel.btnSpeaker.classList.toggle('off', !on);
+      this.panel.btnSpeaker.textContent = on ? '🔊 收听' : '🔊 已屏蔽';
     });
 
     // PASS 按钮
@@ -302,14 +309,8 @@ class GoApp {
     this.voice.setCallbacks({
       onStateChange: (state) => {
         this.panel.updateVoiceState(state);
-        const btn = this.panel.btnVoice;
         if (state === VoiceState.CONNECTED) {
           this.panel.updateHint('语音已连接');
-          btn.classList.add('active');
-          btn.textContent = '🎤 关闭语音';
-        } else if (state === VoiceState.MUTED || state === VoiceState.DISCONNECTED) {
-          btn.classList.remove('active');
-          btn.textContent = '🎤 开启语音';
         }
       },
       onRemoteStream: (stream) => {
