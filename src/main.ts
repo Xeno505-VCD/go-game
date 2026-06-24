@@ -287,8 +287,14 @@ class GoApp {
     this.voice.setCallbacks({
       onStateChange: (state) => {
         this.panel.updateVoiceState(state);
+        const btn = this.panel.btnVoice;
         if (state === VoiceState.CONNECTED) {
           this.panel.updateHint('语音已连接');
+          btn.classList.add('active');
+          btn.textContent = '🎤 关闭语音';
+        } else if (state === VoiceState.MUTED || state === VoiceState.DISCONNECTED) {
+          btn.classList.remove('active');
+          btn.textContent = '🎤 开启语音';
         }
       },
       onRemoteStream: (stream) => {
