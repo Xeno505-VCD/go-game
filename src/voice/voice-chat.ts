@@ -197,9 +197,16 @@ export class VoiceChat {
     // ICE 连接状态变化
     this.pc.onconnectionstatechange = () => {
       const cs = this.pc?.connectionState;
-      if (cs === 'failed' || cs === 'disconnected') {
+      if (cs === 'failed') {
         this.setState(VoiceState.ERROR);
         this.callbacks?.onError('语音连接断开');
+      } else if (cs === 'disconnected') {
+        // ICE 可能正在重新协商，等待自动恢复，不报错
+        this.setState(VoiceState.CONNECTING);
+      } else if (cs === 'connected') {
+        if (this.state !== VoiceState.MUTED) {
+          this.setState(VoiceState.CONNECTED);
+        }
       }
     };
   }
