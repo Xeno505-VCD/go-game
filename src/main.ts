@@ -69,6 +69,9 @@ class GoApp {
     this.panel.btnCreateRoom.addEventListener('click', () => this.createRoom());
     this.panel.btnJoinRoom.addEventListener('click', () => this.joinRoom());
 
+    // 退出房间按钮
+    this.panel.btnLeaveRoom.addEventListener('click', () => this.leaveRoom());
+
     // 语音按钮
     this.panel.btnVoice.addEventListener('click', () => {
       const muted = this.voice.toggleMute();
@@ -557,6 +560,11 @@ class GoApp {
     this.onlineActive = true;
     this.controller.setMode(GameMode.ONLINE);
     this.controller.reset();
+    // 显示退出房间 + 隐藏创建/加入按钮
+    const leaveBtn = document.getElementById('btnLeaveRoom');
+    if (leaveBtn) leaveBtn.style.display = '';
+    this.panel.btnCreateRoom.style.display = 'none';
+    this.panel.btnJoinRoom.style.display = 'none';
   }
 
   private joinRoom(): void {
@@ -570,6 +578,28 @@ class GoApp {
     this.onlineActive = true;
     this.controller.setMode(GameMode.ONLINE);
     this.controller.reset();
+    // 显示退出房间 + 隐藏创建/加入按钮
+    const leaveBtn = document.getElementById('btnLeaveRoom');
+    if (leaveBtn) leaveBtn.style.display = '';
+    this.panel.btnCreateRoom.style.display = 'none';
+    this.panel.btnJoinRoom.style.display = 'none';
+  }
+
+  private leaveRoom(): void {
+    this.voice.hangup();
+    this.voice.dispose();
+    this.online.disconnect();
+    this.onlineActive = false;
+    this.timer.stop();
+    this.panel.hideTimer();
+    this.panel.hideRematchButton();
+    const leaveBtn = document.getElementById('btnLeaveRoom');
+    if (leaveBtn) leaveBtn.style.display = 'none';
+    // 恢复创建/加入按钮
+    this.panel.btnCreateRoom.style.display = '';
+    this.panel.btnJoinRoom.style.display = '';
+    // 切回人机模式
+    this.switchMode(GameMode.AI);
   }
 
   // ==================== 反馈 ====================

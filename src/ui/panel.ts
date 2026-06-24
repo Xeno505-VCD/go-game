@@ -35,6 +35,7 @@ export class Panel {
   // 联机房间
   btnCreateRoom: HTMLButtonElement;
   btnJoinRoom: HTMLButtonElement;
+  btnLeaveRoom: HTMLButtonElement;
   roomInput: HTMLInputElement;
   // 手机端房间号弹窗
   roomInputModalEl: HTMLElement;
@@ -72,6 +73,7 @@ export class Panel {
     this.btnRematch = document.getElementById('btnRematch') as HTMLButtonElement;
     this.btnCreateRoom = document.getElementById('btnCreateRoom') as HTMLButtonElement;
     this.btnJoinRoom = document.getElementById('btnJoinRoom') as HTMLButtonElement;
+    this.btnLeaveRoom = document.getElementById('btnLeaveRoom') as HTMLButtonElement;
     this.roomInput = document.getElementById('roomInput') as HTMLInputElement;
     this.roomInputModalEl = document.getElementById('roomInputModal')!;
     this.roomInputModalField = document.getElementById('roomInputModalField') as HTMLInputElement;
@@ -194,6 +196,14 @@ export class Panel {
         voiceBtn.textContent = '🎤 语音';
       }
     }
+    // 退出房间按钮仅联机模式显示（进入房间后才显示）
+    const leaveBtn = document.getElementById('btnLeaveRoom');
+    if (leaveBtn) {
+      leaveBtn.style.display = 'none'; // 初始隐藏，createRoom/joinRoom 后才显示
+    }
+    // 强制关闭难度弹窗（防止从AI切换到联机时残留）
+    const diffModal = document.getElementById('difficultyModal');
+    if (diffModal) diffModal.style.display = 'none';
   }
 
   // ==================== 信息栏更新 ====================
