@@ -165,9 +165,13 @@ export class Panel {
       this.modeLabelEl.textContent = '联机对战';
       if (modeLine) modeLine.textContent = '联机对战';
     } else if (mode === GameMode.AI) {
-      // 人机：显示难度按钮
+      // 人机：恢复完整UI（模式/难度/重开按钮）
       this.onlinePanelEl.style.display = 'none';
       this.aiPanelEl.style.display = 'block';
+      const restartBtn = document.getElementById('restartBtn');
+      const btnMode = document.getElementById('btnMode');
+      if (restartBtn) restartBtn.style.display = '';
+      if (btnMode) btnMode.style.display = '';
       if (btnDifficulty) btnDifficulty.style.display = '';
       if (btnJoinRoom) btnJoinRoom.style.display = '';
       this.modeLabelEl.textContent = '人机对战';
@@ -175,9 +179,13 @@ export class Panel {
       const diff = this.aiLevelSelect.options[this.aiLevelSelect.selectedIndex]?.text || '普通';
       if (modeLine) modeLine.textContent = `人机对战：(${diff})`;
     } else {
-      // 双人：隐藏难度按钮
+      // 双人：恢复模式/重开，隐藏难度
       this.onlinePanelEl.style.display = 'none';
       this.aiPanelEl.style.display = 'block';
+      const restartBtn = document.getElementById('restartBtn');
+      const btnMode = document.getElementById('btnMode');
+      if (restartBtn) restartBtn.style.display = '';
+      if (btnMode) btnMode.style.display = '';
       if (btnDifficulty) btnDifficulty.style.display = 'none';
       if (btnJoinRoom) btnJoinRoom.style.display = '';
       this.modeLabelEl.textContent = '双人对战';

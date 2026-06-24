@@ -216,7 +216,6 @@ class GoApp {
         StatsStorage.save(this.controller.stats);
         this.panel.updateStats(this.controller.stats);
         this.render();
-        this.voice.hangup();
       },
       onDrawRequest: () => {
         if (confirm('对手申请和棋，同意？')) this.online.sendDrawResponse(true);
@@ -301,8 +300,14 @@ class GoApp {
         }
       },
       onRemoteStream: (stream) => {
-        // 播放远端音频
-        const audio = new Audio();
+        // 用持久化 audio 元素播放远端音频
+        let audio = document.getElementById('remoteAudio') as HTMLAudioElement;
+        if (!audio) {
+          audio = document.createElement('audio');
+          audio.id = 'remoteAudio';
+          audio.autoplay = true;
+          document.body.appendChild(audio);
+        }
         audio.srcObject = stream;
         audio.play().catch(() => {});
       },
@@ -311,7 +316,7 @@ class GoApp {
         if (el) {
           if (level > 0.15) {
             el.style.display = 'inline';
-            el.textContent = '🎤 你正在发言...';
+            el.textContent = this.myColor === ChessColor.BLACK ? '黑棋：正在发言' : '白棋：正在发言';
           } else {
             el.style.display = 'none';
           }
@@ -322,7 +327,7 @@ class GoApp {
         if (el) {
           if (level > 0.10) {
             el.style.display = 'inline';
-            el.textContent = '🎤 对方正在发言...';
+            el.textContent = this.myColor === ChessColor.BLACK ? '白棋：正在发言' : '黑棋：正在发言';
           }
         }
       },

@@ -40,6 +40,7 @@ export class VoiceChat {
   private remoteAnalyser: AnalyserNode | null = null;
   private volumeInterval: ReturnType<typeof setInterval> | null = null;
   private muted = false;
+  private remoteAudio: HTMLAudioElement | null = null;
   /** 信令发送函数（由外部注入） */
   private sendSignaling: ((msg: Record<string, unknown>) => void) | null = null;
 
