@@ -282,15 +282,9 @@ class GoApp {
         this.render();
         this.timer.start();
       },
-      // 语音信令回调
-      onVoiceOffer: (sdp) => {
-        this.voice.handleOffer(sdp);
-      },
-      onVoiceAnswer: (sdp) => {
-        this.voice.handleAnswer(sdp);
-      },
-      onVoiceCandidate: (candidate) => {
-        this.voice.handleCandidate(candidate);
+      // 语音信令回调（simple-peer 统一格式）
+      onVoiceSignal: (data) => {
+        this.voice.handleSignal(data as import('simple-peer').SignalData);
       },
       onVoiceHangup: () => {
         this.voice.dispose();

@@ -43,12 +43,8 @@ export interface OnlineCallbacks {
   /** 再来一局：开始 */
   onRematchStart: () => void;
   // 语音信令回调
-  /** 收到语音Offer */
-  onVoiceOffer?: (sdp: RTCSessionDescriptionInit) => void;
-  /** 收到语音Answer */
-  onVoiceAnswer?: (sdp: RTCSessionDescriptionInit) => void;
-  /** 收到ICE候选 */
-  onVoiceCandidate?: (candidate: RTCIceCandidateInit) => void;
+  /** 收到语音信令（simple-peer signal data） */
+  onVoiceSignal?: (data: unknown) => void;
   /** 对方挂断 */
   onVoiceHangup?: () => void;
   /** 对方静音状态变更 */
@@ -240,15 +236,9 @@ export class OnlineManager {
       case 'FULL':
         cb.onDisconnect();
         break;
-      // 语音信令
-      case 'VOICE_OFFER':
-        cb.onVoiceOffer?.(msg.sdp as RTCSessionDescriptionInit);
-        break;
-      case 'VOICE_ANSWER':
-        cb.onVoiceAnswer?.(msg.sdp as RTCSessionDescriptionInit);
-        break;
-      case 'VOICE_ICE':
-        cb.onVoiceCandidate?.(msg.candidate as RTCIceCandidateInit);
+      // 语音信令（simple-peer 统一格式）
+      case 'VOICE_SIGNAL':
+        cb.onVoiceSignal?.(msg.data);
         break;
       case 'VOICE_HANGUP':
         cb.onVoiceHangup?.();

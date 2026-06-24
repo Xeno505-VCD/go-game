@@ -309,16 +309,10 @@ wss.on('connection', (ws, req) => {
 
       // ==================== 语音信令转发 ====================
 
-      if (msg.type === 'VOICE_OFFER') {
-        sendToOpponent(room, player, { type: 'VOICE_OFFER', sdp: msg.sdp });
-      }
+      // ==================== 语音信令转发（simple-peer 统一格式） ====================
 
-      if (msg.type === 'VOICE_ANSWER') {
-        sendToOpponent(room, player, { type: 'VOICE_ANSWER', sdp: msg.sdp });
-      }
-
-      if (msg.type === 'VOICE_ICE') {
-        sendToOpponent(room, player, { type: 'VOICE_ICE', candidate: msg.candidate });
+      if (msg.type === 'VOICE_SIGNAL') {
+        sendToOpponent(room, player, { type: 'VOICE_SIGNAL', data: msg.data });
       }
 
       if (msg.type === 'VOICE_HANGUP') {
