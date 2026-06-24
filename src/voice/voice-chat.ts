@@ -216,6 +216,10 @@ export class VoiceChat {
     if (this.audioContext) return;
     try {
       this.audioContext = new AudioContext();
+      // 浏览器自动播放策略要求 AudioContext 在用户交互后恢复
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().catch(() => {});
+      }
 
       if (this.localStream) {
         const src = this.audioContext.createMediaStreamSource(this.localStream);

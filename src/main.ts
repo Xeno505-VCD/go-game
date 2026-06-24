@@ -26,6 +26,7 @@ class GoApp {
   private voice: VoiceChat;
 
   private onlineActive = false;
+  private gameOverFlag = false;
   private myColor: ChessColor = ChessColor.EMPTY;
 
   constructor() {
@@ -161,8 +162,12 @@ class GoApp {
     // 计时器
     this.timer.setOnTick((s) => this.panel.updateTimer(s));
     this.timer.setOnTimeout(() => {
+      if (this.gameOverFlag) return;
       if (this.controller.gameMode === GameMode.ONLINE && this.onlineActive) {
+        this.timer.stop();
+        this.gameOverFlag = true;
         this.panel.updateHint('超时！你输了');
+        this.panel.setButtonsEnabled(false);
         this.online.sendSurrender();
       }
     });
