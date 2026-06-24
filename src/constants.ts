@@ -60,6 +60,14 @@ export const MOVE_TIMER_SECONDS = 30;
 
 // ==================== WebRTC 语音 ====================
 export const RTC_ICE_SERVERS: RTCIceServer[] = [
+  // STUN 服务器
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  // OpenRelay 免费 TURN（无需注册，测试用）
+  {
+    urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'],
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
