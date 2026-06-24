@@ -189,14 +189,28 @@ class GoApp {
         this.panel.updateStatus('对局中');
         this.render();
         this.timer.start();
-        // 联机自动启动语音
-        this.startVoiceCall();
+        this.panel.showTimer(30);
+        // 仅黑方（创建房间者）发起语音，白方等待接收 Offer
+        if (this.myColor === ChessColor.BLACK) {
+          this.startVoiceCall();
+        } else {
+          this.voice.setSignalingSender((msg) => this.online.sendRaw(msg));
+        }
       },
       onMove: (row, col, color, currentPlayer) => {
-        this.controller.board.placeStone(row, col, color);
-        this.controller.currentPlayer = currentPlayer;
+        // 走完整围棋规则引擎（含提子判定）
+        this.controller.currentPlayer = color;
+        const result = this.controller.placeStone(row, col);
+        if (result.legal) {
+          this.controller.currentPlayer = currentPlayer;
+        } else {
+          // 落子不合法但服务端已确认，强制同步
+          this.controller.board.placeStone(row, col, color);
+          this.controller.currentPlayer = currentPlayer;
+        }
         this.controller.board.resetPassCount();
         this.panel.updateTurn(currentPlayer);
+        this.panel.updateCaptured(this.controller.board.capturedBlack, this.controller.board.capturedWhite);
         this.render();
         this.timer.reset();
       },
