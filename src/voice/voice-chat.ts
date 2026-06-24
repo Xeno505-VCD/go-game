@@ -20,8 +20,8 @@ export class VoiceChat {
   private localAnalyser: AnalyserNode | null = null;
   private remoteAnalyser: AnalyserNode | null = null;
   private volumeInterval: ReturnType<typeof setInterval> | null = null;
-  private micEnabled = true;
-  private speakerEnabled = true;
+  private micEnabled = false;
+  private speakerEnabled = false;
   private initiator = false;
   private makingOffer = false;
   private ignoreOffer = false;

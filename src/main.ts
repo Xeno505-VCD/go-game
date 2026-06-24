@@ -73,15 +73,21 @@ class GoApp {
     // 退出房间按钮
     this.panel.btnLeaveRoom.addEventListener('click', () => this.leaveRoom());
 
-    // 麦克风按钮
+    // 麦克风按钮（初始关闭，首次点击激活 AudioContext）
+    this.panel.btnMic.classList.add('off');
+    this.panel.btnMic.textContent = '🎤 已静音';
     this.panel.btnMic.addEventListener('click', () => {
+      this.ensureAudioStarted();
       const on = this.voice.toggleMic();
       this.panel.btnMic.classList.toggle('off', !on);
       this.panel.btnMic.textContent = on ? '🎤 麦克风' : '🎤 已静音';
     });
 
-    // 收听按钮
+    // 收听按钮（初始关闭）
+    this.panel.btnSpeaker.classList.add('off');
+    this.panel.btnSpeaker.textContent = '🔊 已屏蔽';
     this.panel.btnSpeaker.addEventListener('click', () => {
+      this.ensureAudioStarted();
       const on = this.voice.toggleSpeaker();
       this.panel.btnSpeaker.classList.toggle('off', !on);
       this.panel.btnSpeaker.textContent = on ? '🔊 收听' : '🔊 已屏蔽';
@@ -349,6 +355,15 @@ class GoApp {
         this.panel.updateHint('语音错误: ' + err);
       },
     });
+  }
+
+  private ensureAudioStarted(): void {
+    // 用户点击按钮时激活 AudioContext（浏览器安全策略要求）
+    const audio = document.getElementById('remoteAudio') as HTMLAudioElement;
+    if (audio) {
+      audio.muted = false;
+      audio.play().catch(() => {});
+    }
   }
 
   private startVoiceCall(): void {
