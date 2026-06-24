@@ -27,6 +27,7 @@ class GoApp {
 
   private onlineActive = false;
   private gameOverFlag = false;
+  private _audioUnlocked = false;
   private myColor: ChessColor = ChessColor.EMPTY;
 
   constructor() {
@@ -320,7 +321,7 @@ class GoApp {
         }
       },
       onRemoteStream: (stream) => {
-        // 用持久化 audio 元素播放远端音频
+        // 用持久化 audio 元素绑定远端音频
         let audio = document.getElementById('remoteAudio') as HTMLAudioElement;
         if (!audio) {
           audio = document.createElement('audio');
@@ -329,7 +330,10 @@ class GoApp {
           document.body.appendChild(audio);
         }
         audio.srcObject = stream;
-        audio.play().catch(() => {});
+        // 只在用户已点击按钮后才 play（绕过 autoplay 拦截）
+        if (this._audioUnlocked) {
+          audio.play().catch(() => {});
+        }
       },
       onLocalVolume: (level) => {
         const el = document.getElementById('voiceSpeaking');
@@ -358,7 +362,7 @@ class GoApp {
   }
 
   private ensureAudioStarted(): void {
-    // 用户点击按钮时激活 AudioContext（浏览器安全策略要求）
+    this._audioUnlocked = true;
     const audio = document.getElementById('remoteAudio') as HTMLAudioElement;
     if (audio) {
       audio.muted = false;
