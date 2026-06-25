@@ -265,7 +265,15 @@ export class OnlineManager {
 
   private send(data: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
+      const msg = JSON.stringify(data);
+      if (data.type === 'VOICE_SIGNAL') {
+        const hasDesc = !!(data as any).data?.type;
+        const hasCand = !!(data as any).data?.candidate;
+        console.log(`[Online] 发送 VOICE_SIGNAL, SDP:${hasDesc} ICE:${hasCand} 大小:${msg.length}B 缓冲:${this.ws.bufferedAmount}`);
+      }
+      this.ws.send(msg);
+    } else {
+      console.warn('[Online] WebSocket 未连接, 无法发送:', data.type, ', readyState:', this.ws?.readyState);
     }
   }
 
