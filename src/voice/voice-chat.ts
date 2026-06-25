@@ -7,7 +7,6 @@ export interface VoiceCallbacks {
   onLocalVolume?: (level: number) => void;
   onRemoteVolume?: (level: number) => void;
   onError: (error: string) => void;
-  /** ICE连接状态变化 — 用于诊断面板实时显示 */
   onIceStateChange?: (state: string) => void;
 }
 
@@ -25,7 +24,6 @@ export class VoiceChat {
   private micEnabled = false;
   private speakerEnabled = false;
   private initiator = false;
-  /** 在远程描述设置之前到达的 ICE 候选队列 */
   private pendingCandidates: RTCIceCandidateInit[] = [];
   private remoteDescSet = false;
 
@@ -36,7 +34,6 @@ export class VoiceChat {
     return this.pc?.iceConnectionState || 'disconnected';
   }
 
-  /** 发起通话（黑方/initiator 使用） */
   async startCall() {
     if (!this.sendSignaling) { this.callbacks?.onError('信令未就绪'); return; }
     this.initiator = true;
@@ -47,10 +44,11 @@ export class VoiceChat {
     }
     this.startLocalVolumeAnalysis();
     try {
-      console.log('[VoiceChat] Initiator: 发送 Offer');
+      console.log('[VoiceChat] Initiator: 创建 Offer');
       const desc = await this.pc!.createOffer();
+      console.log('[VoiceChat] Initiator: setLocalDescription...');
       await this.pc!.setLocalDescription(desc);
-      // onicecandidate 会在 setLocalDescription 后自动触发，但我们也显式发送一次完整描述
+      console.log('[VoiceChat] Initiator: Offer 已发送, signalingState=', this.pc!.signalingState);
       this.sendSignaling({ type: 'VOICE_SIGNAL', data: desc });
     } catch (e) {
       this.setState(VoiceState.ERROR);
@@ -58,7 +56,6 @@ export class VoiceChat {
     }
   }
 
-  /** 处理远端信令 */
   async handleSignal(data: unknown) {
     if (!this.pc) {
       this.initiator = false;
@@ -67,35 +64,50 @@ export class VoiceChat {
     try {
       const signal = data as RTCSessionDescriptionInit & { candidate?: RTCIceCandidateInit };
       if (signal.candidate) {
+        console.log('[VoiceChat] 收到 ICE 候选, remoteDescSet=', this.remoteDescSet, ', 候选:', signal.candidate.candidate?.substring(0, 50));
         const iceCandidate = new RTCIceCandidate(signal.candidate);
         if (this.remoteDescSet) {
-          await this.pc!.addIceCandidate(iceCandidate);
+          try {
+            await this.pc!.addIceCandidate(iceCandidate);
+            console.log('[VoiceChat] ICE 候选注入成功');
+          } catch (err) {
+            console.error('[VoiceChat] addIceCandidate 失败:', err);
+          }
         } else {
-          console.log('[VoiceChat] ICE候选排队等待（remote description未设置）');
+          console.log('[VoiceChat] ICE候选排队等待');
           this.pendingCandidates.push(signal.candidate);
         }
       } else {
-        console.log(`[VoiceChat] Receiver: 收到 ${signal.type}, 设置 RemoteDescription`);
-        await this.pc!.setRemoteDescription(new RTCSessionDescription(signal));
-        this.remoteDescSet = true;
-        // 清空排队中的ICE候选
-        for (const c of this.pendingCandidates) {
-          await this.pc!.addIceCandidate(new RTCIceCandidate(c));
-        }
-        this.pendingCandidates = [];
-        if (signal.type === 'offer') {
-          console.log('[VoiceChat] Receiver: 创建 Answer');
-          const answer = await this.pc!.createAnswer();
-          await this.pc!.setLocalDescription(answer);
-          this.sendSignaling!({ type: 'VOICE_SIGNAL', data: answer });
+        console.log(`[VoiceChat] 收到 SDP (type=${signal.type}), signalingState=${this.pc!.signalingState}`);
+        try {
+          await this.pc!.setRemoteDescription(new RTCSessionDescription(signal));
+          this.remoteDescSet = true;
+          console.log('[VoiceChat] setRemoteDescription 成功, 清空 ', this.pendingCandidates.length, ' 个排队候选');
+          for (const c of this.pendingCandidates) {
+            try {
+              await this.pc!.addIceCandidate(new RTCIceCandidate(c));
+            } catch (err) {
+              console.error('[VoiceChat] 排队候选注入失败:', err);
+            }
+          }
+          this.pendingCandidates = [];
+          if (signal.type === 'offer') {
+            console.log('[VoiceChat] 收到 Offer, 创建 Answer...');
+            const answer = await this.pc!.createAnswer();
+            await this.pc!.setLocalDescription(answer);
+            console.log('[VoiceChat] Answer 已发送, signalingState=', this.pc!.signalingState);
+            this.sendSignaling!({ type: 'VOICE_SIGNAL', data: answer });
+          }
+        } catch (err) {
+          console.error('[VoiceChat] setRemoteDescription 失败:', err);
+          this.callbacks?.onError(`SDP处理失败: ${err}`);
         }
       }
     } catch (e) {
-      console.warn('[VoiceChat] 信令处理:', (e as Error).message, (e as Error).stack);
+      console.warn('[VoiceChat] 信令处理外层错误:', (e as Error).message);
     }
   }
 
-  /** 打开/关闭麦克风（用户点击按钮） */
   async toggleMic(): Promise<boolean> {
     this.micEnabled = !this.micEnabled;
     if (this.micEnabled) {
@@ -109,7 +121,6 @@ export class VoiceChat {
             const alreadyAdded = senders.some(s => s.track && s.track.id === t.id);
             if (!alreadyAdded) {
               this.pc!.addTrack(t, this.localStream!);
-              // 手动重新协商（因为addTrack修改了媒体内容）
               this.renegotiate();
             }
           });
@@ -142,17 +153,15 @@ export class VoiceChat {
   hangup() { this.sendSignaling?.({ type: 'VOICE_HANGUP' }); this.cleanup(); }
   dispose() { this.cleanup(); }
 
-  // ========== 私有方法 ==========
-
   private async renegotiate(): Promise<void> {
     if (!this.pc || this.pc.signalingState !== 'stable') return;
     try {
-      console.log('[VoiceChat] 重新协商（addTrack后）');
+      console.log('[VoiceChat] 重新协商...');
       const desc = await this.pc.createOffer();
       await this.pc.setLocalDescription(desc);
       this.sendSignaling?.({ type: 'VOICE_SIGNAL', data: desc });
     } catch (e) {
-      console.warn('[VoiceChat] 重新协商失败:', (e as Error).message);
+      console.warn('[VoiceChat] 重新协商失败:', e);
     }
   }
 
@@ -166,7 +175,7 @@ export class VoiceChat {
     this.pendingCandidates = [];
 
     this.pc.ontrack = (e) => {
-      console.log('[VoiceChat] 收到远端音频流!');
+      console.log('[VoiceChat] ✅ ontrack 触发! streams:', e.streams.length);
       if (e.streams[0]) {
         this.callbacks?.onRemoteStream(e.streams[0]);
         this.startRemoteVolumeAnalysis(e.streams[0]);
@@ -175,14 +184,20 @@ export class VoiceChat {
 
     this.pc.onicecandidate = (e) => {
       if (e.candidate) {
-        console.log('[VoiceChat] 发送ICE候选:', e.candidate.candidate.substring(0, 40));
+        console.log('[VoiceChat] 本地ICE候选:', e.candidate.candidate.substring(0, 60));
         this.sendSignaling?.({ type: 'VOICE_SIGNAL', data: { candidate: e.candidate.toJSON() } });
+      } else {
+        console.log('[VoiceChat] ICE gathering 完成 (null candidate)');
       }
+    };
+
+    this.pc.onicegatheringstatechange = () => {
+      console.log('[VoiceChat] ICE gathering 状态:', this.pc?.iceGatheringState);
     };
 
     this.pc.oniceconnectionstatechange = () => {
       const iceState = this.pc?.iceConnectionState || 'disconnected';
-      console.log('[VoiceChat] ICE状态:', iceState);
+      console.log('[VoiceChat] ICE 连接状态:', iceState);
       this.callbacks?.onIceStateChange?.(iceState);
     };
 
@@ -193,7 +208,7 @@ export class VoiceChat {
       else if (cs === 'failed') { this.callbacks?.onError('语音连接失败'); this.cleanup(); }
     };
 
-    // ⚠️ 不设置 onnegotiationneeded — 全部手动控制SDP交换
+    // 不设置 onnegotiationneeded — 全部手动控制
     this.setState(VoiceState.CONNECTING);
     console.log('[VoiceChat] PeerConnection 已创建');
   }

@@ -310,9 +310,9 @@ class GoApp {
           this.render();
         }
       },
-      // 语音信令回调
-      onVoiceSignal: (data) => {
-        this.voice.handleSignal(data as import('simple-peer').SignalData);
+      // 语音信令回调（必须 await）
+      onVoiceSignal: async (data) => {
+        await this.voice.handleSignal(data as import('simple-peer').SignalData);
       },
       onVoiceHangup: () => {
         this.voice.dispose();
