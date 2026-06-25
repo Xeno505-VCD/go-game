@@ -131,14 +131,22 @@ function isLegalMove(board, row, col, color, koPoint) {
 /** 广播消息 */
 function broadcast(room, data) {
   const msg = JSON.stringify(data);
-  room.players.forEach(p => { try { p.ws.send(msg); } catch(e) {} });
+  room.players.forEach(p => { try { p.ws.send(msg); } catch(e) { console.error('[广播失败]', e.message); } });
 }
 
 /** 发送给对手 */
 function sendToOpponent(room, player, data) {
   const msg = JSON.stringify(data);
   const opp = room.players.find(p => p.color !== player.color);
-  if (opp) { try { opp.ws.send(msg); } catch(e) {} }
+  if (opp) {
+    try {
+      opp.ws.send(msg);
+    } catch(e) {
+      console.error('[sendToOpponent失败]', data.type || 'unknown', '错误:', e.message, '大小:', msg.length);
+    }
+  } else {
+    console.warn('[sendToOpponent] 未找到对手, 当前玩家数:', room.players.length);
+  }
 }
 
 // ==================== WebSocket 连接处理 ====================
@@ -312,7 +320,12 @@ wss.on('connection', (ws, req) => {
       // ==================== 语音信令转发（simple-peer 统一格式） ====================
 
       if (msg.type === 'VOICE_SIGNAL') {
+        const hasSdp = !!msg.data?.type;
+        const hasCandidate = !!msg.data?.candidate;
+        const size = JSON.stringify(msg.data || {}).length;
+        console.log(`[VOICE_SIGNAL] 来自 P${player.color}, SDP:${hasSdp} ICE:${hasCandidate} 大小:${size}B`);
         sendToOpponent(room, player, { type: 'VOICE_SIGNAL', data: msg.data });
+        console.log(`[VOICE_SIGNAL] 已转发给对手`);
       }
 
       if (msg.type === 'VOICE_HANGUP') {
