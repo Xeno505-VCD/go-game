@@ -113,7 +113,11 @@ export class VoiceChat {
     if (this.micEnabled) {
       try {
         await this.acquireLocalStream();
-        if (!this.pc) this.createPeerConnection();
+        // 关键：如果在 handleSignal 中已创建了 PC（接收方收到 Offer 后），不要重新创建
+        if (!this.pc) {
+          // 发起方或首次打开 — 创建 PC
+          this.createPeerConnection();
+        }
         if (this.localStream && this.pc) {
           this.localStream.getAudioTracks().forEach(t => {
             t.enabled = true;
@@ -121,7 +125,10 @@ export class VoiceChat {
             const alreadyAdded = senders.some(s => s.track && s.track.id === t.id);
             if (!alreadyAdded) {
               this.pc!.addTrack(t, this.localStream!);
-              this.renegotiate();
+              // 仅在 stable 状态下重新协商（PC 已连接完成时）
+              if (this.pc!.signalingState === 'stable' && this.remoteDescSet) {
+                this.renegotiate();
+              }
             }
           });
         }

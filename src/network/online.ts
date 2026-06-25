@@ -170,7 +170,7 @@ export class OnlineManager {
     this.startPing();
   }
 
-  private handleMessage(msg: WsMessage): void {
+  private async handleMessage(msg: WsMessage): Promise<void> {
     const cb = this.callbacks;
     if (!cb) return;
 
@@ -248,9 +248,9 @@ export class OnlineManager {
       case 'FULL':
         cb.onDisconnect();
         break;
-      // 语音信令（simple-peer 统一格式）
+      // 语音信令（必须 await，确保 SDP 处理完成）
       case 'VOICE_SIGNAL':
-        cb.onVoiceSignal?.(msg.data);
+        await cb.onVoiceSignal?.(msg.data);
         break;
       case 'VOICE_HANGUP':
         cb.onVoiceHangup?.();
