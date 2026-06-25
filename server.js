@@ -187,8 +187,16 @@ wss.on('connection', (ws, req) => {
   }
 
   ws.on('message', (raw) => {
+    const rawStr = raw.toString();
+    const rawSize = rawStr.length;
+    // 记录所有非ping消息（不解析，防止JSON.parse丢失）
+    if (!rawStr.includes('"ping"')) {
+      const preview = rawStr.substring(0, 100);
+      const isVc = rawStr.includes('VOICE_SIGNAL');
+      console.log(`[MSG-IN] 大小:${rawSize}B VC:${isVc} 预览:${preview}...`);
+    }
     try {
-      const msg = JSON.parse(raw.toString());
+      const msg = JSON.parse(rawStr);
       if (msg.type === 'ping') return;
 
       // ==================== 游戏消息 ====================
