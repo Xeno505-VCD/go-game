@@ -46,7 +46,7 @@ export interface OnlineCallbacks {
   onPass: (currentPlayer: ChessColor, action: 'PASS' | 'SCORING') => void;
   // 语音信令回调
   /** 收到语音信令（simple-peer signal data） */
-  onVoiceSignal?: (data: unknown) => void;
+  onVoiceSignal?: (data: unknown) => Promise<void>;
   /** 对方挂断 */
   onVoiceHangup?: () => void;
   /** 对方静音状态变更 */
@@ -151,11 +151,11 @@ export class OnlineManager {
       this.callbacks?.onTimerStop();
     };
 
-    this.ws.onmessage = (e) => {
+    this.ws.onmessage = async (e) => {
       try {
         const msg: WsMessage = JSON.parse(e.data);
-        this.handleMessage(msg);
-      } catch { /* ignore */ }
+        await this.handleMessage(msg);
+      } catch (e) { console.error('[Online] 消息处理失败:', e); }
     };
 
     this.ws.onclose = () => {
