@@ -59,15 +59,23 @@ export const WS_URL =
 export const MOVE_TIMER_SECONDS = 30;
 
 // ==================== WebRTC 语音 ====================
+// TODO: 生产环境改为通过 API 动态获取 TURN 凭据（安全性）
+// API: https://xeno-modular.metered.live/api/v1/turn/credentials?apiKey=YOUR_API_KEY
 export const RTC_ICE_SERVERS: RTCIceServer[] = [
   // STUN 服务器
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun.cloudflare.com:3478' },
-  // OpenRelay 免费 TURN（无需注册，测试用）
+  { urls: 'stun:stun.relay.metered.ca:80' },
+  // Metered.ca 正式 TURN（跨网中继）
   {
-    urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'],
-    username: 'openrelayproject',
-    credential: 'openrelayproject',
+    urls: ['turn:global.relay.metered.ca:80', 'turn:global.relay.metered.ca:80?transport=tcp'],
+    username: 'dad53b98d5187e77b36e3670',
+    credential: '1Dk7RBTcms0eGxoy',
+  },
+  {
+    urls: ['turn:global.relay.metered.ca:443', 'turns:global.relay.metered.ca:443?transport=tcp'],
+    username: 'dad53b98d5187e77b36e3670',
+    credential: '1Dk7RBTcms0eGxoy',
   },
 ];

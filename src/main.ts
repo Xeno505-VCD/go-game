@@ -209,6 +209,11 @@ class GoApp {
         this.render();
         this.timer.start();
         this.panel.showTimer(30);
+        // 显示语音状态行和音量条
+        const rowVoice = document.getElementById('rowVoice');
+        const rowVol = document.getElementById('rowVolume');
+        if (rowVoice) rowVoice.style.display = 'flex';
+        if (rowVol) rowVol.style.display = 'flex';
         // 仅黑方（创建房间者）发起语音，白方等待接收 Offer
         if (this.myColor === ChessColor.BLACK) {
           this.startVoiceCall();
@@ -251,13 +256,11 @@ class GoApp {
         this.render();
       },
       onDrawRequest: () => {
-        if (confirm('对手申请和棋，同意？')) this.online.sendDrawResponse(true);
-        else this.online.sendDrawResponse(false);
+        this.showRequestModal('draw', '对手申请和棋', () => this.online.sendDrawResponse(true), () => this.online.sendDrawResponse(false));
       },
       onDrawRejected: () => this.panel.updateHint('对手拒绝和棋'),
       onUndoRequest: () => {
-        if (confirm('对手申请悔棋，同意？')) this.online.sendUndoResponse(true);
-        else this.online.sendUndoResponse(false);
+        this.showRequestModal('undo', '对手申请悔棋', () => this.online.sendUndoResponse(true), () => this.online.sendUndoResponse(false));
       },
       onUndoRejected: () => this.panel.updateHint('对手拒绝悔棋'),
       onUndoExecuted: (board, currentPlayer, moves) => {
@@ -296,7 +299,18 @@ class GoApp {
         this.render();
         this.timer.start();
       },
-      // 语音信令回调（simple-peer 统一格式）
+      // PASS 结果（从服务器回调）
+      onPass: (currentPlayer, action) => {
+        if (action === 'SCORING') {
+          this.finalizeGame();
+        } else {
+          this.controller.currentPlayer = currentPlayer;
+          this.panel.updateTurn(currentPlayer);
+          this.panel.updateHint('一方 Pass');
+          this.render();
+        }
+      },
+      // 语音信令回调
       onVoiceSignal: (data) => {
         this.voice.handleSignal(data as import('simple-peer').SignalData);
       },
@@ -336,6 +350,7 @@ class GoApp {
         }
       },
       onLocalVolume: (level) => {
+        // 发言提示
         const el = document.getElementById('voiceSpeaking');
         if (el) {
           if (level > 0.15) {
@@ -345,8 +360,12 @@ class GoApp {
             el.style.display = 'none';
           }
         }
+        // 本地音量条
+        const bar = document.getElementById('localVolBar');
+        if (bar) bar.style.width = Math.min(100, Math.round(level * 100)) + '%';
       },
       onRemoteVolume: (level) => {
+        // 发言提示
         const el = document.getElementById('voiceSpeaking');
         if (el) {
           if (level > 0.10) {
@@ -354,9 +373,26 @@ class GoApp {
             el.textContent = this.myColor === ChessColor.BLACK ? '白棋：正在发言' : '黑棋：正在发言';
           }
         }
+        // 远端音量条
+        const bar = document.getElementById('remoteVolBar');
+        if (bar) bar.style.width = Math.min(100, Math.round(level * 100)) + '%';
       },
       onError: (err) => {
         this.panel.updateHint('语音错误: ' + err);
+      },
+      // ICE连接状态诊断（实时显示到页面）
+      onIceStateChange: (iceState: string) => {
+        const el = document.getElementById('voiceIceState');
+        if (el) {
+          el.textContent = iceState;
+          if (iceState === 'connected') {
+            el.style.color = '#4caf50';
+          } else if (iceState === 'checking') {
+            el.style.color = '#ffa726';
+          } else {
+            el.style.color = '#ef5350';
+          }
+        }
       },
     });
   }
@@ -486,16 +522,9 @@ class GoApp {
 
   private doPass(): void {
     if (this.controller.gameMode === GameMode.ONLINE && this.onlineActive) {
-      // 联机版：发送 PASS 给服务器
+      // 联机版：发送 PASS 给服务器，服务器广播后通过 onPass 回调同步
       if (this.controller.currentPlayer !== this.myColor) return;
-      // 本地执行
-      const passResult = this.controller.pass();
-      if (passResult.action === 'SCORING') {
-        this.finalizeGame();
-      } else {
-        this.panel.updateTurn(this.controller.currentPlayer);
-        this.panel.updateHint('一方 Pass');
-      }
+      this.online.sendPass();
       return;
     }
     const passResult = this.controller.pass();
@@ -638,6 +667,26 @@ class GoApp {
     this.panel.btnJoinRoom.style.display = '';
     // 切回人机模式
     this.switchMode(GameMode.AI);
+  }
+
+  /** 显示对方申请弹窗（和棋/悔棋） */
+  private showRequestModal(type: 'draw' | 'undo', title: string, onAccept: () => void, onReject: () => void): void {
+    const modalId = type === 'draw' ? 'drawRequestModal' : 'undoRequestModal';
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+      // 降级到 confirm
+      if (confirm(title + '，同意？')) onAccept(); else onReject();
+      return;
+    }
+    const titleEl = modal.querySelector('.req-title') as HTMLElement;
+    if (titleEl) titleEl.textContent = title;
+    modal.style.display = 'flex';
+    const acceptBtn = modal.querySelector('.req-accept') as HTMLButtonElement;
+    const rejectBtn = modal.querySelector('.req-reject') as HTMLButtonElement;
+    const close = () => { modal.style.display = 'none'; };
+    acceptBtn.onclick = () => { close(); onAccept(); };
+    rejectBtn.onclick = () => { close(); onReject(); };
+    (modal.querySelector('.req-bg') as HTMLElement)?.addEventListener('click', close);
   }
 
   // ==================== 反馈 ====================

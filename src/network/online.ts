@@ -42,6 +42,8 @@ export interface OnlineCallbacks {
   onRematchRejected: () => void;
   /** 再来一局：开始 */
   onRematchStart: () => void;
+  /** PASS结果 */
+  onPass: (currentPlayer: ChessColor, action: 'PASS' | 'SCORING') => void;
   // 语音信令回调
   /** 收到语音信令（simple-peer signal data） */
   onVoiceSignal?: (data: unknown) => void;
@@ -90,6 +92,10 @@ export class OnlineManager {
 
   sendMove(row: number, col: number): void {
     this.send({ type: 'MOVE', row, col });
+  }
+
+  sendPass(): void {
+    this.send({ type: 'PASS' });
   }
 
   sendSurrender(): void {
@@ -232,6 +238,12 @@ export class OnlineManager {
         break;
       case 'REMATCH_START':
         cb.onRematchStart();
+        break;
+      case 'PASS_RESULT':
+        cb.onPass(
+          (msg.currentPlayer as ChessColor) || ChessColor.BLACK,
+          (msg.action as 'PASS' | 'SCORING') || 'PASS',
+        );
         break;
       case 'FULL':
         cb.onDisconnect();

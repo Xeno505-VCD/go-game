@@ -7,6 +7,8 @@ export interface VoiceCallbacks {
   onLocalVolume?: (level: number) => void;
   onRemoteVolume?: (level: number) => void;
   onError: (error: string) => void;
+  /** ICE连接状态变化 — 用于诊断面板实时显示 */
+  onIceStateChange?: (state: string) => void;
 }
 
 /** 原生 WebRTC 语音通话管理器 */
@@ -28,6 +30,11 @@ export class VoiceChat {
 
   setCallbacks(cbs: VoiceCallbacks) { this.callbacks = cbs; }
   setSignalingSender(sender: (msg: Record<string, unknown>) => void) { this.sendSignaling = sender; }
+
+  /** 获取当前 ICE 连接状态（供外部轮询） */
+  getIceConnectionState(): string {
+    return this.pc?.iceConnectionState || 'disconnected';
+  }
 
   /** 发起通话 */
   async startCall() {
@@ -132,7 +139,14 @@ export class VoiceChat {
       }
     };
 
-    // 连接状态
+    // ICE连接状态 → 实时诊断
+    this.pc.oniceconnectionstatechange = () => {
+      const iceState = this.pc?.iceConnectionState || 'disconnected';
+      console.log('[VoiceChat] ICE状态:', iceState);
+      this.callbacks?.onIceStateChange?.(iceState);
+    };
+
+    // 连接状态（用于VoiceState映射）
     this.pc.onconnectionstatechange = () => {
       const cs = this.pc?.connectionState;
       if (cs === 'connected') { this.setState(VoiceState.CONNECTED); }
