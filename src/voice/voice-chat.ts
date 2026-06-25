@@ -57,6 +57,7 @@ export class VoiceChat {
   }
 
   async handleSignal(data: unknown) {
+    console.log('[VoiceChat] handleSignal 被调用, pc 存在:', !!this.pc, ', 数据类型:', typeof data);
     if (!this.pc) {
       this.initiator = false;
       this.createPeerConnection();

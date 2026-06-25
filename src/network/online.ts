@@ -250,7 +250,9 @@ export class OnlineManager {
         break;
       // 语音信令（必须 await，确保 SDP 处理完成）
       case 'VOICE_SIGNAL':
+        console.log('[Online] VOICE_SIGNAL 收到, forwarding to VoiceChat');
         await cb.onVoiceSignal?.(msg.data);
+        console.log('[Online] VOICE_SIGNAL 处理完成');
         break;
       case 'VOICE_HANGUP':
         cb.onVoiceHangup?.();
