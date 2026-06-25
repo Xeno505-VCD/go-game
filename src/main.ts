@@ -77,9 +77,9 @@ class GoApp {
     // 麦克风按钮（初始关闭，首次点击激活 AudioContext）
     this.panel.btnMic.classList.add('off');
     this.panel.btnMic.textContent = '🎤 已静音';
-    this.panel.btnMic.addEventListener('click', () => {
+    this.panel.btnMic.addEventListener('click', async () => {
       this.ensureAudioStarted();
-      const on = this.voice.toggleMic();
+      const on = await this.voice.toggleMic();
       this.panel.btnMic.classList.toggle('off', !on);
       this.panel.btnMic.textContent = on ? '🎤 麦克风' : '🎤 已静音';
     });
